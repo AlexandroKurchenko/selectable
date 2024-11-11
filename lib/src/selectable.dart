@@ -60,12 +60,12 @@ class Selectable extends StatefulWidget {
   _SelectableState createState() => _SelectableState();
 }
 
-class _SelectableState extends State<Selectable>
-    with SelectionDelegate, TickerProviderStateMixin {
+class _SelectableState extends State<Selectable> with SelectionDelegate, TickerProviderStateMixin {
   final GlobalKey _globalKey = GlobalKey();
 
   SelectableController? _selectionController;
   bool _weOwnSelCtrlr = true;
+
   bool get _widgetOwnsSelCtrlr => !_weOwnSelCtrlr;
 
   ScrollController? _scrollController;
@@ -147,8 +147,7 @@ class _SelectableState extends State<Selectable>
   void _refresh([VoidCallback? fn]) => !mounted
       ? null
       : isBuilding
-          ? WidgetsBinding.instance
-              .addPostFrameCallback((timeStamp) => setState(fn ?? () {}))
+          ? WidgetsBinding.instance.addPostFrameCallback((timeStamp) => setState(fn ?? () {}))
           : setState(fn ?? () {});
 
   void _selectionControllerListener() {
@@ -156,8 +155,7 @@ class _SelectableState extends State<Selectable>
 
     final sc = _selectionController!;
 
-    if (sc.isTextSelected &&
-        (_selections.main?.isHidden ?? false) != sc.getSelection()!.isHidden) {
+    if (sc.isTextSelected && (_selections.main?.isHidden ?? false) != sc.getSelection()!.isHidden) {
       // String bToStr(bool isHidden) => isHidden ? 'hidden' : 'visible';
       // dmPrint('Selection state changed from '
       //     '${bToStr(_selections.main?.isHidden ?? false)} to '
@@ -189,8 +187,7 @@ class _SelectableState extends State<Selectable>
   bool _hasChangedScrollController(ScrollController? scrollController) {
     return _scrollController != scrollController ||
         (scrollController != null &&
-            (!scrollController.hasOneClient ||
-                scrollController.position != _scrollPosition));
+            (!scrollController.hasOneClient || scrollController.position != _scrollPosition));
   }
 
   void _checkForUpdatedScrollController(ScrollController? scrollController) {
@@ -199,8 +196,7 @@ class _SelectableState extends State<Selectable>
       if (scrollController?.hasOneClient ?? false) {
         _scrollController = scrollController;
         _scrollPosition = _scrollController!.position;
-        _scrollController!.position.isScrollingNotifier
-            .addListener(_isScrollingListener);
+        _scrollController!.position.isScrollingNotifier.addListener(_isScrollingListener);
         // dmPrint('Selectable: Added listener to scroll controller.');
       } else if (scrollController != null) {
         // dmPrint('Selectable: Cannot add listener, '
@@ -214,8 +210,7 @@ class _SelectableState extends State<Selectable>
       // dmPrint('Selectable: Removed listener from scroll controller.');
     }
     if (_scrollController?.hasOneClient ?? false) {
-      _scrollController!.position.isScrollingNotifier
-          .removeListener(_isScrollingListener);
+      _scrollController!.position.isScrollingNotifier.removeListener(_isScrollingListener);
     }
     _scrollController = null;
     _scrollPosition = null;
@@ -228,8 +223,7 @@ class _SelectableState extends State<Selectable>
     if (isScrolling != _buildHelper.isScrolling) {
       // dmPrint(isScrolling ? 'STARTED SCROLLING...' : 'STOPPED SCROLLING.');
       _buildHelper.isScrolling = isScrolling;
-      if ((_selections.main?.isTextSelected ?? false) &&
-          _buildHelper.showPopupMenu) {
+      if ((_selections.main?.isTextSelected ?? false) && _buildHelper.showPopupMenu) {
         _refresh();
       }
     }
@@ -243,8 +237,7 @@ class _SelectableState extends State<Selectable>
     _isBuilding = true;
 
     // Add post-frame-callback?
-    if (_selectionController != null ||
-        _hasChangedScrollController(widget.scrollController)) {
+    if (_selectionController != null || _hasChangedScrollController(widget.scrollController)) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         _updateSelectionControllerWithNewSelections();
         _checkForUpdatedScrollController(widget.scrollController);
@@ -261,8 +254,8 @@ class _SelectableState extends State<Selectable>
 
     // Ignore taps if text is not selected, because the child might want to
     // handle them.
-    final ignoreTap = !(widget.showSelectionControls &&
-        (_selections.main?.isTextSelected ?? false));
+    final ignoreTap =
+        !(widget.showSelectionControls && (_selections.main?.isTextSelected ?? false));
 
     // This is how the selection color is set in the Flutter 2.5.2
     // version of src/material/selectable_text.dart, except that
@@ -285,9 +278,17 @@ class _SelectableState extends State<Selectable>
           onLongPress: widget.selectWordOnLongPress
               ? () => _onLongPressOrDoubleTap(_localTapOrLongPressPt)
               : null,
-          onTapDown: ignoreTap
-              ? null
-              : (details) => _localTapOrLongPressPt = details.localPosition,
+          onLongPressMoveUpdate: widget.selectWordOnLongPress && _localTapOrLongPressPt != null
+
+              ? (details) {
+                  _localLongPressUpdatePt = details.localPosition;
+                  _onLongPressDragUpdate(_localTapOrLongPressPt, _localLongPressUpdatePt);
+                }
+              : null,
+          onLongPressUp: widget.selectWordOnLongPress
+              ? () => _localLongPressUpdatePt != null ? _onLongPressDragUpdateEnd() : null
+              : null,
+          onTapDown: ignoreTap ? null : (details) => _localTapOrLongPressPt = details.localPosition,
           onTap: ignoreTap ? null : () => _onTap(_localTapOrLongPressPt),
           onDoubleTapDown: widget.selectWordOnDoubleTap
               ? (details) => _localTapOrLongPressPt = details.localPosition
@@ -302,8 +303,7 @@ class _SelectableState extends State<Selectable>
                 ? _selectionController?.getCustomPainter() ??
                     DefaultSelectionPainter(
                       color: selectionColor,
-                      opacityAnimation: _selectionIsHidden ==
-                              (_selections.main?.isHidden ?? false)
+                      opacityAnimation: _selectionIsHidden == (_selections.main?.isHidden ?? false)
                           ? _selectionOpacityController
                           : (_selections.main?.isHidden ?? false)
                               ? kAlwaysDismissedAnimation
@@ -357,8 +357,7 @@ class _SelectableState extends State<Selectable>
                     _buildHelper.showParagraphRects) {
                   return AnimatedOpacity(
                     opacity: (_selections.main?.isHidden ?? false) ? 0.0 : 1.0,
-                    duration:
-                        (_selections.main?.animationDuration ?? Duration.zero),
+                    duration: (_selections.main?.animationDuration ?? Duration.zero),
                     child: Stack(
                       children: [
                         // if (_selections.main.rects?.isNotEmpty ?? false)
@@ -413,6 +412,7 @@ class _SelectableState extends State<Selectable>
   //
 
   Offset? _localTapOrLongPressPt;
+  Offset? _localLongPressUpdatePt;
 
   void _onLongPressOrDoubleTap(Offset? localPosition) {
     if (!mounted) return;
@@ -422,8 +422,7 @@ class _SelectableState extends State<Selectable>
       _refresh(() {
         if (_selections.main == null) {
           // Create the main selection object, if needed.
-          _selections[0] =
-              _selectionController?.getSelection() ?? const Selection();
+          _selections[0] = _selectionController?.getSelection() ?? const Selection();
         }
         _buildHelper.showPopupMenu = widget.showPopup;
         _selections.dragInfo
@@ -440,8 +439,7 @@ class _SelectableState extends State<Selectable>
     // dmPrint('onTap at: $pt');
     if (pt != null && (_selections.main?.isTextSelected ?? false)) {
       _refresh(() {
-        if (_buildHelper.usingCupertinoControls &&
-            (_selections.main?.containsPoint(pt) ?? false)) {
+        if (_buildHelper.usingCupertinoControls && (_selections.main?.containsPoint(pt) ?? false)) {
           if (widget.showPopup) {
             _buildHelper.showPopupMenu = !_buildHelper.showPopupMenu;
           }
@@ -459,8 +457,7 @@ class _SelectableState extends State<Selectable>
   PointerDeviceKind? _pointerDeviceKind;
 
   @override
-  Iterable<SelectableMenuItem> get menuItems =>
-      widget.popupMenuItems ?? _defaultMenuItems;
+  Iterable<SelectableMenuItem> get menuItems => widget.popupMenuItems ?? _defaultMenuItems;
 
   @override
   SelectableController? get controller => _selectionController;
@@ -468,6 +465,30 @@ class _SelectableState extends State<Selectable>
   var _isDraggingSelectionHandle = false;
   var _hasDraggedAReasonableDistance = false;
   late Offset _dragStartPt;
+
+  void _onLongPressDragUpdate(Offset? startPosition, Offset? endPosition) {
+    if (!mounted) return;
+    final pt = endPosition;
+
+    if (pt != null && (_selections.main?.isTextSelected ?? false)) {
+
+      _refresh(() {
+        if (_selections.main == null) {
+          // Create the main selection object, if needed.
+          _selections[0] = _selectionController?.getSelection() ?? const Selection();
+        }
+
+        _buildHelper.showPopupMenu = false;
+        _selections.dragInfo
+          ..selectionPt = Offset(pt.dx, pt.dy)
+          ..handleType = SelectionHandleType.left;
+      });
+    }
+  }
+
+  void _onLongPressDragUpdateEnd() {
+    onDragSelectionHandleEnd(SelectionHandleType.left);
+  }
 
   @override
   void onDragSelectionHandleUpdate(
@@ -499,8 +520,7 @@ class _SelectableState extends State<Selectable>
     if (_hasDraggedAReasonableDistance) {
       _refresh(() {
         // For touch, offset the y value by -30.
-        final yOffset =
-            _pointerDeviceKind == PointerDeviceKind.touch ? -30.0 : 0.0;
+        final yOffset = _pointerDeviceKind == PointerDeviceKind.touch ? -30.0 : 0.0;
 
         _buildHelper.showPopupMenu = false;
         _selections.dragInfo
